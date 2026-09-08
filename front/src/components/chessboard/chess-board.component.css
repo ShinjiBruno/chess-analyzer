@@ -1,0 +1,6 @@
+.chessboard-container {
+      width: 100%;
+      max-width: 600px; 
+      aspect-ratio: 1;
+      margin: 0 auto;
+    }

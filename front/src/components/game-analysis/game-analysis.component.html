@@ -1,0 +1,21 @@
+<div class="analysis-container">
+      <div class="board-wrapper">
+        <app-chess-board 
+          [fen]="currentFen" 
+          [orientation]="boardOrientation"
+          [onMoveValidate]="validateMove"
+          (moveMade)="handleMoveMade($event)">
+        </app-chess-board>
+      </div>
+      
+      <div class="control-panel">
+        <h3>Painel de Análise</h3>
+        <button (click)="flipBoard()">Inverter Tabuleiro</button>
+        <button (click)="resetGame()">Reiniciar Posição</button>
+        
+        <div class="status">
+          <p><strong>Vez de jogar:</strong> {{ chess.turn() === 'w' ? 'Brancas' : 'Negras' }}</p>
+          <p class="fen-text"><strong>FEN:</strong> {{ currentFen }}</p>
+        </div>
+      </div>
+    </div>

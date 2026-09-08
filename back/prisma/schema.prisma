@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Color {
+  WHITE
+  BLACK
+}
+
+enum GameResult {
+  WHITE_WIN
+  BLACK_WIN
+  DRAW
+  UNKNOWN
+}
+
+// Modo de jogo (time control)
+enum TimeControl {
+  BULLET
+  BLITZ
+  RAPID
+  CLASSICAL
+  CORRESPONDENCE
+  CUSTOM
+}
+
+enum GameSource {
+  MANUAL
+  CHESS_COM
+  LICHESS
+  PGN_FILE
+}
+
+enum AnnotationType {
+  ARROW
+  CIRCLE
+  HIGHLIGHT
+  TEXT
+}
+
+// ---------------------------------------------------------------------------
+// Modelos
+// ---------------------------------------------------------------------------
+
+model Game {
+  id          String      @id @default(cuid())
+  externalId  String?     @unique // id externo (chess.com/lichess)
+  source      GameSource  @default(MANUAL)
+  url         String?     // url da partida na plataforma de origem, se houver
+
+  white       String
+  black       String
+  whiteElo    Int?
+  blackElo    Int?
+  result      GameResult  @default(UNKNOWN)
+  resultBy    String?     // Ex.: "mate", "resignation", "timeout", "draw"
+  termination String?
+
+  timeControl TimeControl @default(CUSTOM)
+  opening     String?     // nome da abertura (ECO)
+  eco         String?     // código ECO (ex.: B90)
+  fen         String      // posição final em FEN
+  turns       Int         @default(0) // total de meios-lances
+  playedAt    DateTime?   // data/hora em que a partida foi jogada
+  pgn         String?     // PGN original completo
+
+  moves   Move[]
+  studies Study[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Análise de resultados por partida (flags derivadas)
+  isWhiteWin Boolean @default(false)
+  isBlackWin Boolean @default(false)
+  isDraw     Boolean @default(false)
+}
+
+model Move {
+  id       String @id @default(cuid())
+  gameId   String
+  ply      Int    // número do meio-lance (1-indexado)
+  san      String // notação curta (ex.: "Nf3")
+  uci      String? // notação universal (ex.: "g1f3")
+  before   String? // FEN antes do lance
+  after    String? // FEN depois do lance
+  comment  String? // comentário (NAG/texto)
+  timeSpentSec Int? // tempo gasto no lance (se disponível)
+  eval     Float? // avaliação da engine (centipawns), quando houver
+
+  game     Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, ply])
+}
+
+model Study {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  gameId      String?
+
+  game      Game?       @relation(fields: [gameId], references: [id], onDelete: SetNull)
+  chapters  Chapter[]
+  tags      String      @default("[]") // tags livres em JSON: ["abertura", "italiana"]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Capítulo de estudo: representa uma posição variante (board + anotações)
+model Chapter {
+  id        String  @id @default(cuid())
+  studyId   String
+  name      String
+  fen       String  // posição inicial do capítulo
+  pgn       String? // variante em PGN, se aplicável
+
+  study        Study        @relation(fields: [studyId], references: [id], onDelete: Cascade)
+  annotations  Annotation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Anotação visual sobre um capítulo (setas, círculos, destaques, texto)
+model Annotation {
+  id        String         @id @default(cuid())
+  chapterId String
+  type      AnnotationType
+  square    String?        // casa alvo (ex.: "e4")
+  from      String?        // origem para setas (ex.: "e2")
+  to        String?        // destino para setas (ex.: "e4")
+  text      String?        // texto livre
+  color     String?        // cor (ex.: "#ff0000")
+
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
