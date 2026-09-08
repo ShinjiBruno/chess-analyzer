@@ -1,0 +1,96 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Minha Chessbase</h1>
+      <p class="subtitle">{{ total() }} partidas na base</p>
+    </div>
+    <button class="btn btn-primary" (click)="openImport()">Importar partidas</button>
+  </header>
+
+  <app-import-dialog
+    [open]="importOpen()"
+    (close)="importOpen.set(false)"
+    (imported)="onImported()"
+  />
+
+  <section class="filters card">
+    <div class="filters-grid">
+      <input
+        type="text"
+        placeholder="Buscar jogador/abertura..."
+        [value]="filter().query ?? ''"
+        (input)="onQueryInput($event)"
+      />
+      <input
+        type="text"
+        placeholder="Abertura"
+        [value]="filter().opening ?? ''"
+        (input)="onFieldInput('opening', $event)"
+      />
+      <input
+        type="text"
+        placeholder="Código ECO"
+        [value]="filter().eco ?? ''"
+        (input)="onFieldInput('eco', $event)"
+      />
+      <select [value]="filter().timeControl ?? ''" (change)="onFieldChange('timeControl', $event)">
+        <option value="">Todos os ritmos</option>
+        <option *ngFor="let t of timeControlLabels" [value]="t.value">{{ t.label }}</option>
+      </select>
+      <select [value]="filter().result ?? ''" (change)="onFieldChange('result', $event)">
+        <option value="">Todos os resultados</option>
+        <option value="WHITE_WIN">Vitória das brancas</option>
+        <option value="BLACK_WIN">Vitória das pretas</option>
+        <option value="DRAW">Empate</option>
+        <option value="UNKNOWN">Desconhecido</option>
+      </select>
+      <select [value]="filter().source ?? ''" (change)="onFieldChange('source', $event)">
+        <option value="">Toda origem</option>
+        <option *ngFor="let s of sourceLabels" [value]="s.value">{{ s.label }}</option>
+      </select>
+    </div>
+    <div class="filters-actions">
+      <button class="btn" (click)="resetFilters()">Limpar</button>
+      <button class="btn btn-primary" (click)="applyFilter()">Aplicar filtros</button>
+    </div>
+  </section>
+
+  <p *ngIf="error()" class="error">{{ error() }}</p>
+
+  <div *ngIf="loading()" class="loading">Carregando partidas...</div>
+
+  <div *ngIf="!loading() && games().length === 0" class="empty card">
+    <p>Nenhuma partida encontrada.</p>
+    <button class="btn btn-primary" (click)="openImport()">Importar agora</button>
+  </div>
+
+  <section class="games-list">
+    <button
+      *ngFor="let game of games()"
+      class="game-card card"
+      (click)="openGame(game)"
+    >
+      <div class="game-players">
+        <span class="player white">
+          <span class="dot white"></span>
+          {{ game.white }} <small *ngIf="game.whiteElo">({{ game.whiteElo }})</small>
+        </span>
+        <span class="vs">vs</span>
+        <span class="player black">
+          <span class="dot black"></span>
+          {{ game.black }} <small *ngIf="game.blackElo">({{ game.blackElo }})</small>
+        </span>
+      </div>
+      <div class="game-result">
+        <span class="badge" [ngClass]="resultClass(game.result)">{{ resultLabel(game.result) }}</span>
+      </div>
+      <div class="game-meta">
+        <span *ngIf="game.opening" class="opening">{{ game.opening }}</span>
+        <span class="eco" *ngIf="game.eco">{{ game.eco }}</span>
+        <span class="time">{{ timeControlLabel(game.timeControl) }}</span>
+        <span class="date" *ngIf="game.playedAt">{{ game.playedAt | date: 'dd/MM/yyyy' }}</span>
+        <span class="source">{{ sourceLabel(game.source) }}</span>
+      </div>
+    </button>
+  </section>
+</div>

@@ -1,0 +1,70 @@
+<div class="page">
+  <div class="topbar">
+    <button class="btn" (click)="backToList()">← Voltar</button>
+    <h1 *ngIf="game()">{{ game()!.white }} <span class="vs">vs</span> {{ game()!.black }}</h1>
+  </div>
+
+  <p *ngIf="error()" class="error">{{ error() }}</p>
+  <div *ngIf="loading()" class="loading">Carregando partida...</div>
+
+  <div class="viewer" *ngIf="game() && !loading()">
+    <div class="board-panel">
+      <app-chess-board
+        [fen]="currentFen"
+        [orientation]="boardOrientation"
+        [draggable]="false"
+      ></app-chess-board>
+      <button class="btn" (click)="flip()">Inverter tabuleiro</button>
+    </div>
+
+    <div class="info-panel">
+      <header class="game-header">
+        <div class="players">
+          <div class="player-row">
+            <span class="dot white"></span>
+            <span class="name">{{ game()!.white }}</span>
+            <span class="elo" *ngIf="game()!.whiteElo">({{ game()!.whiteElo }})</span>
+          </div>
+          <div class="player-row">
+            <span class="dot black"></span>
+            <span class="name">{{ game()!.black }}</span>
+            <span class="elo" *ngIf="game()!.blackElo">({{ game()!.blackElo }})</span>
+          </div>
+        </div>
+        <div class="badge-row">
+          <span class="badge" [ngClass]="resultClass(game()!.result)">{{ resultLabel(game()!.result) }}</span>
+          <span class="chip" *ngIf="game()!.eco">{{ game()!.eco }}</span>
+          <span class="chip">{{ timeControlLabel(game()!.timeControl) }}</span>
+        </div>
+        <p class="opening" *ngIf="game()!.opening">{{ game()!.opening }}</p>
+        <p class="meta" *ngIf="game()!.playedAt">Jogada em {{ game()!.playedAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+      </header>
+
+      <nav class="move-nav">
+        <button class="btn" (click)="first()">⏮</button>
+        <button class="btn" (click)="prev()">◀</button>
+        <span class="counter">{{ currentIndex() }} / {{ totalPly }}</span>
+        <button class="btn" (click)="next()">▶</button>
+        <button class="btn" (click)="last()">⏭</button>
+      </nav>
+
+      <div class="moves">
+        <ng-container *ngFor="let move of game()!.moves; let i = index">
+          <button
+            class="move"
+            [class.active]="currentIndex() === i + 1"
+            (click)="goTo(i + 1)"
+          >
+            <ng-container *ngIf="i % 2 === 0">{{ (i / 2) + 1 }}.</ng-container>
+            {{ move.san }}
+          </button>
+        </ng-container>
+      </div>
+
+      <details class="pgn-details">
+        <summary>Ver PGN completo</summary>
+        <pre>{{ game()!.pgn }}</pre>
+      </details>
+    </div>
+  </div>
+</div>

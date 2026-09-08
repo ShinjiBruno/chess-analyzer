@@ -1,5 +1,15 @@
+<div class="app-shell">
+  <header class="site-header">
+    <a class="brand" routerLink="/">
+      <span class="brand-icon">♞</span>
+      <span class="brand-name">Chess Analyzer</span>
+    </a>
+    <nav class="nav">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Partidas</a>
+    </nav>
+  </header>
 
-  
-
-<app-game-analysis></app-game-analysis>
-  <router-outlet></router-outlet>
+  <main class="site-main">
+    <router-outlet></router-outlet>
+  </main>
+</div>

@@ -1,0 +1,77 @@
+<div class="overlay" *ngIf="open" (click)="onClose()">
+  <div class="dialog" (click)="$event.stopPropagation()">
+    <header class="dialog-header">
+      <h2>Importar partidas</h2>
+      <button class="icon-btn" (click)="onClose()">✕</button>
+    </header>
+
+    <div class="tabs">
+      <button
+        class="tab"
+        [class.active]="tab() === 'chesscom'"
+        (click)="selectTab('chesscom')"
+      >
+        Chess.com
+      </button>
+      <button
+        class="tab"
+        [class.active]="tab() === 'lichess'"
+        (click)="selectTab('lichess')"
+      >
+        Lichess
+      </button>
+      <button
+        class="tab"
+        [class.active]="tab() === 'pgn'"
+        (click)="selectTab('pgn')"
+      >
+        Colar PGN
+      </button>
+    </div>
+
+    <div class="dialog-body">
+      <ng-container *ngIf="tab() !== 'pgn'">
+        <label>
+          Nome de usuário
+          <input
+            type="text"
+            placeholder="ex.: magnuscarlsen"
+            [value]="username()"
+            (input)="username.set($any($event.target).value)"
+            (blur)="username.set($any($event.target).value)"
+          />
+        </label>
+        <label>
+          Quantidade de partidas (máx.)
+          <input
+            type="number"
+            min="1"
+            max="500"
+            [value]="maxGames()"
+            (input)="maxGames.set($any($event.target).valueAsNumber || 20)"
+          />
+        </label>
+      </ng-container>
+
+      <label *ngIf="tab() === 'pgn'">
+        PGN (pode conter várias partidas)
+        <textarea
+          rows="8"
+          placeholder="[Event ...]&#10;[White ...]&#10;...&#10;&#10;1. e4 e5 ..."
+          [value]="pgnText()"
+          (input)="pgnText.set($any($event.target).value)"
+        ></textarea>
+      </label>
+
+      <p *ngIf="error()" class="error">{{ error() }}</p>
+      <p *ngIf="result()" class="success">{{ result() }}</p>
+    </div>
+
+    <footer class="dialog-footer">
+      <button class="btn" (click)="onClose()">Cancelar</button>
+      <button class="btn btn-primary" [disabled]="loading()" (click)="doImport()">
+        {{ loading() ? 'Importando...' : 'Importar' }}
+      </button>
+    </footer>
+  </div>
+</div>
