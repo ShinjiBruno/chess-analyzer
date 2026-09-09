@@ -46,6 +46,7 @@ export async function addAnnotation(
   chapterId: string,
   data: {
     type: "ARROW" | "CIRCLE" | "HIGHLIGHT" | "TEXT";
+    ply?: number;
     square?: string;
     from?: string;
     to?: string;
@@ -53,7 +54,7 @@ export async function addAnnotation(
     color?: string;
   },
 ) {
-  return prisma.annotation.create({ data: { chapterId, ...data } });
+  return prisma.annotation.create({ data: { chapterId, ply: data.ply ?? 0, ...data } });
 }
 
 export async function deleteAnnotation(id: string) {

@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 
 @import "../public/assets/chessboard.css";
+@import "../public/assets/extensions/markers/markers.css";
+@import "../public/assets/extensions/arrows/arrows.css";
 
 :root {
   --bg: #f6f7f9;
@@ -69,4 +71,15 @@ body {
 .btn-primary:hover {
   filter: brightness(1.05);
   border-color: var(--accent);
+}
+
+.btn-danger {
+  background: transparent;
+  color: #b3241c;
+  border-color: #e0a09b;
+}
+
+.btn-danger:hover {
+  background: #fdecea;
+  border-color: #b3241c;
 }

@@ -63,7 +63,11 @@ export async function importChessCom(
     for (const g of json.games ?? []) {
       if (!g.pgn) continue;
       const pgn = parsePgn(g.pgn);
-      games.push({ pgn, url: g.url });
+      games.push({
+        pgn,
+        url: g.url,
+        externalId: g.url ?? pgn.site,
+      });
       if (games.length >= maxGames) return games;
     }
   }
@@ -78,5 +82,5 @@ export async function importLichess(
   const url = `${LICHESS_API}/api/games/user/${encodeURIComponent(username)}?max=${maxGames}&pgnInJson=false`;
   const pgnText = await fetchText(url);
   const parsed = parseMultiplePgn(pgnText);
-  return parsed.map((pgn) => ({ pgn }));
+  return parsed.map((pgn) => ({ pgn, externalId: pgn.site, url: pgn.site }));
 }

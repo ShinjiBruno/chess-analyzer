@@ -2,6 +2,10 @@
   <div class="topbar">
     <button class="btn" (click)="backToList()">← Voltar</button>
     <h1 *ngIf="game()">{{ game()!.white }} <span class="vs">vs</span> {{ game()!.black }}</h1>
+    <div class="topbar-actions">
+      <button *ngIf="game()" class="btn" (click)="openSaveForm()">Salvar nesta posição</button>
+      <button *ngIf="game()" class="btn btn-danger" (click)="deleteGame()">Excluir partida</button>
+    </div>
   </div>
 
   <p *ngIf="error()" class="error">{{ error() }}</p>
@@ -49,22 +53,74 @@
       </nav>
 
       <div class="moves">
-        <ng-container *ngFor="let move of game()!.moves; let i = index">
+        <div class="move-row" *ngFor="let row of moveRows">
+          <span class="move-number">{{ row.number }}.</span>
           <button
             class="move"
-            [class.active]="currentIndex() === i + 1"
-            (click)="goTo(i + 1)"
+            [class.active]="isActive(row, 'white')"
+            (click)="goTo(plyFor(row, 'white'))"
           >
-            <ng-container *ngIf="i % 2 === 0">{{ (i / 2) + 1 }}.</ng-container>
-            {{ move.san }}
+            {{ row.white }}
           </button>
-        </ng-container>
+          <button
+            class="move"
+            *ngIf="row.black"
+            [class.active]="isActive(row, 'black')"
+            (click)="goTo(plyFor(row, 'black'))"
+          >
+            {{ row.black }}
+          </button>
+        </div>
       </div>
+
+      <p class="hint">Use as setas ← → para navegar entre os lances.</p>
 
       <details class="pgn-details">
         <summary>Ver PGN completo</summary>
         <pre>{{ game()!.pgn }}</pre>
       </details>
+    </div>
+  </div>
+
+  <!-- Formulário: salvar como estudo/capítulo -->
+  <div class="save-overlay" *ngIf="showSaveForm()" (click)="showSaveForm.set(false)">
+    <div class="save-dialog" (click)="$event.stopPropagation()">
+      <header class="save-header">
+        <h2>Salvar nesta posição</h2>
+        <button class="icon-btn" (click)="showSaveForm.set(false)">✕</button>
+      </header>
+
+      <div class="save-body">
+        <div class="mode-toggle">
+          <button class="mode" [class.active]="saveMode() === 'new'" (click)="saveMode.set('new')">Novo estudo</button>
+          <button class="mode" [class.active]="saveMode() === 'existing'" (click)="saveMode.set('existing')">Estudo existente</button>
+        </div>
+
+        <label *ngIf="saveMode() === 'new'">
+          Nome do novo estudo
+          <input type="text" placeholder="ex.: Meu repertório" [value]="newStudyName()" (input)="onNewStudyNameInput($event)" />
+        </label>
+
+        <label *ngIf="saveMode() === 'existing'">
+          Estudo
+          <select [value]="selectedStudyId() ?? ''" (change)="onStudySelect($event)">
+            <option value="">Selecione um estudo...</option>
+            <option *ngFor="let s of studies()" [value]="s.id">{{ s.name }}</option>
+          </select>
+        </label>
+
+        <label>
+          Nome do capítulo
+          <input type="text" placeholder="ex.: Lance 12 — variante principal" [value]="chapterName()" (input)="onChapterNameInput($event)" />
+        </label>
+
+        <p class="save-info">A posição atual (lance {{ currentIndex() }}) será salva como capítulo com os lances restantes.</p>
+      </div>
+
+      <footer class="save-footer">
+        <button class="btn" (click)="showSaveForm.set(false)">Cancelar</button>
+        <button class="btn btn-primary" (click)="saveAsChapter()">Salvar</button>
+      </footer>
     </div>
   </div>
 </div>

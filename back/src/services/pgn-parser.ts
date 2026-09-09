@@ -12,6 +12,7 @@ export interface ParsedPgnGame {
   opening?: string;
   eco?: string;
   playedAt?: Date;
+  site?: string; // URL/identificador da partida na plataforma de origem
   moves: { san: string; uci?: string; comment?: string }[];
   pgn: string;
 }
@@ -102,6 +103,7 @@ export function parsePgn(pgn: string): ParsedPgnGame {
     opening: headers["Opening"] ?? headers["ECOUrl"],
     eco: headers["ECO"],
     playedAt: parsePgnDate(headers["Date"] ?? headers["UTCDate"] ?? headers["UTCDate"]),
+    site: headers["Site"] ?? headers["Link"],
     moves,
     pgn,
   };

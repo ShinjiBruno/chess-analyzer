@@ -27,6 +27,7 @@ const createChapterSchema = z.object({
 
 const annotationSchema = z.object({
   type: z.nativeEnum(AnnotationType),
+  ply: z.number().int().min(0).optional(),
   square: z.string().optional(),
   from: z.string().optional(),
   to: z.string().optional(),

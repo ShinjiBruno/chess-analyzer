@@ -1,12 +1,18 @@
 import { Injectable } from '@angular/core';
 import type {
   Annotation,
+  Chapter,
   Game,
   GameFilter,
   GameListResponse,
   GameStats,
   Study,
 } from '../models';
+
+export interface ImportResult {
+  imported: number;
+  skipped: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -53,22 +59,22 @@ export class ApiService {
     return this.request<GameStats>('/games/stats');
   }
 
-  importPgn(pgn: string): Promise<{ imported: number }> {
-    return this.request<{ imported: number }>('/games/import/pgn', {
+  importPgn(pgn: string): Promise<ImportResult> {
+    return this.request<ImportResult>('/games/import/pgn', {
       method: 'POST',
       body: JSON.stringify({ pgn }),
     });
   }
 
-  importChessCom(username: string, maxGames: number): Promise<{ imported: number }> {
-    return this.request<{ imported: number }>('/games/import/chesscom', {
+  importChessCom(username: string, maxGames: number): Promise<ImportResult> {
+    return this.request<ImportResult>('/games/import/chesscom', {
       method: 'POST',
       body: JSON.stringify({ username, maxGames }),
     });
   }
 
-  importLichess(username: string, maxGames: number): Promise<{ imported: number }> {
-    return this.request<{ imported: number }>('/games/import/lichess', {
+  importLichess(username: string, maxGames: number): Promise<ImportResult> {
+    return this.request<ImportResult>('/games/import/lichess', {
       method: 'POST',
       body: JSON.stringify({ username, maxGames }),
     });
@@ -94,8 +100,8 @@ export class ApiService {
     return this.request<void>(`/studies/${id}`, { method: 'DELETE' });
   }
 
-  createChapter(studyId: string, data: { name: string; fen: string; pgn?: string }): Promise<Study['chapters'] extends (infer C)[] ? C : never> {
-    return this.request(`/studies/${studyId}/chapters`, {
+  createChapter(studyId: string, data: { name: string; fen: string; pgn?: string }): Promise<Chapter> {
+    return this.request<Chapter>(`/studies/${studyId}/chapters`, {
       method: 'POST',
       body: JSON.stringify(data),
     });

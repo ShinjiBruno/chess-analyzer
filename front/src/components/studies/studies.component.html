@@ -1,0 +1,54 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Estudos</h1>
+      <p class="subtitle">{{ studies().length }} estudo(s)</p>
+    </div>
+    <button class="btn btn-primary" (click)="creating.set(!creating())">
+      {{ creating() ? 'Cancelar' : 'Novo estudo' }}
+    </button>
+  </header>
+
+  <p *ngIf="error()" class="error">{{ error() }}</p>
+
+  <section *ngIf="creating()" class="card form">
+    <div class="form-grid">
+      <label>
+        Nome
+        <input type="text" [value]="newName()" (input)="onNameInput($event)" placeholder="ex.: Repertório de Siciliana" />
+      </label>
+      <label>
+        Descrição
+        <input type="text" [value]="newDescription()" (input)="onDescriptionInput($event)" placeholder="(opcional)" />
+      </label>
+      <label>
+        Tags (separadas por vírgula)
+        <input type="text" [value]="newTags()" (input)="onTagsInput($event)" placeholder="abertura, siciliana" />
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" [disabled]="!newName().trim()" (click)="createStudy()">Criar estudo</button>
+    </div>
+  </section>
+
+  <div *ngIf="loading()" class="loading">Carregando estudos...</div>
+
+  <div *ngIf="!loading() && studies().length === 0 && !creating()" class="empty card">
+    <p>Nenhum estudo criado ainda.</p>
+    <button class="btn btn-primary" (click)="creating.set(true)">Criar o primeiro estudo</button>
+  </div>
+
+  <section class="studies-list">
+    <div class="study-card card" *ngFor="let study of studies()">
+      <div class="study-main" (click)="openStudy(study)">
+        <h2 class="study-name">{{ study.name }}</h2>
+        <p class="study-desc" *ngIf="study.description">{{ study.description }}</p>
+        <div class="study-meta">
+          <span class="chip">{{ study._count?.chapters ?? 0 }} capítulo(s)</span>
+          <span class="chip" *ngFor="let tag of parseTags(study.tags)">{{ tag }}</span>
+        </div>
+      </div>
+      <button class="btn btn-danger" (click)="deleteStudy(study)">Excluir</button>
+    </div>
+  </section>
+</div>

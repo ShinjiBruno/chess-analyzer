@@ -59,21 +59,19 @@ export async function gameRoutes(app: FastifyInstance) {
 
   app.post("/games/import/pgn", async (req, reply) => {
     const body = z.object({ pgn: z.string().min(1) }).parse(req.body);
-    const count = await importFromPgnText(body.pgn);
-    return { imported: count };
+    const result = await importFromPgnText(body.pgn);
+    return result;
   });
 
   app.post("/games/import/chesscom", async (req, reply) => {
     const { username, maxGames } = importChessComSchema.parse(req.body);
     const games = await importChessCom(username, maxGames);
-    const count = await importGames(games, GameSource.CHESS_COM);
-    return { imported: count };
+    return importGames(games, GameSource.CHESS_COM);
   });
 
   app.post("/games/import/lichess", async (req, reply) => {
     const { username, maxGames } = importChessComSchema.parse(req.body);
     const games = await importLichess(username, maxGames);
-    const count = await importGames(games, GameSource.LICHESS);
-    return { imported: count };
+    return importGames(games, GameSource.LICHESS);
   });
 }

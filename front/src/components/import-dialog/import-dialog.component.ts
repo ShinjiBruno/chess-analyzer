@@ -37,12 +37,26 @@ export class ImportDialogComponent {
     this.result.set(null);
   }
 
+  onUsernameInput(event: Event) {
+    this.username.set((event.target as HTMLInputElement).value);
+  }
+
+  onMaxGamesInput(event: Event) {
+    const raw = (event.target as HTMLInputElement).value;
+    const n = Number(raw);
+    this.maxGames.set(Number.isFinite(n) && n > 0 ? n : 20);
+  }
+
+  onPgnInput(event: Event) {
+    this.pgnText.set((event.target as HTMLTextAreaElement).value);
+  }
+
   async doImport() {
     this.loading.set(true);
     this.error.set(null);
     this.result.set(null);
     try {
-      let res: { imported: number };
+      let res: { imported: number; skipped: number };
       if (this.tab() === 'chesscom') {
         res = await this.api.importChessCom(this.username().trim(), this.maxGames());
       } else if (this.tab() === 'lichess') {
@@ -50,7 +64,9 @@ export class ImportDialogComponent {
       } else {
         res = await this.api.importPgn(this.pgnText());
       }
-      this.result.set(`${res.imported} partida(s) importada(s) com sucesso.`);
+      const parts = [`${res.imported} partida(s) importada(s)`];
+      if (res.skipped > 0) parts.push(`${res.skipped} duplicada(s) ignorada(s)`);
+      this.result.set(parts.join(' — ') + '.');
       this.imported.emit();
     } catch (e) {
       this.error.set((e as Error).message);

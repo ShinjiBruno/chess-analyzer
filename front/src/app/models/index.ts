@@ -65,6 +65,7 @@ export interface Annotation {
   id: string;
   chapterId: string;
   type: AnnotationType;
+  ply: number;
   square?: string | null;
   from?: string | null;
   to?: string | null;

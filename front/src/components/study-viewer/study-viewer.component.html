@@ -1,0 +1,111 @@
+<div class="page">
+  <div class="topbar">
+    <button class="btn" (click)="backToList()">← Voltar</button>
+    <h1 *ngIf="study()">{{ study()!.name }}</h1>
+  </div>
+
+  <p *ngIf="study()?.description" class="description">{{ study()!.description }}</p>
+  <p *ngIf="error()" class="error">{{ error() }}</p>
+  <div *ngIf="loading()" class="loading">Carregando estudo...</div>
+
+  <div class="layout" *ngIf="study() && !loading()">
+    <!-- Capítulos -->
+    <aside class="chapters card">
+      <header class="side-header">
+        <h2>Capítulos</h2>
+        <button class="btn btn-small" (click)="showingChapterForm.set(!showingChapterForm())">
+          {{ showingChapterForm() ? '−' : '+' }}
+        </button>
+      </header>
+
+      <div *ngIf="showingChapterForm()" class="chapter-form">
+        <input type="text" placeholder="Nome do capítulo" [value]="chapterName()" (input)="onChapterNameInput($event)" />
+        <input type="text" placeholder="FEN (padrão: start)" [value]="chapterFen()" (input)="onChapterFenInput($event)" />
+        <textarea rows="3" placeholder="Lances (opcional, ex.: e4 e5 Nf3...)" [value]="chapterPgn()" (input)="onChapterPgnInput($event)"></textarea>
+        <button class="btn btn-primary" [disabled]="!chapterName().trim()" (click)="addChapter()">Adicionar</button>
+      </div>
+
+      <button
+        class="chapter-item"
+        *ngFor="let chapter of study()!.chapters"
+        [class.active]="selectedChapter?.id === chapter.id"
+        (click)="selectChapter(chapter.id)"
+      >
+        <span class="chapter-name">{{ chapter.name }}</span>
+        <span class="delete" (click)="deleteChapter(chapter); $event.stopPropagation()">✕</span>
+      </button>
+
+      <p *ngIf="!study()!.chapters?.length" class="muted">Nenhum capítulo.</p>
+    </aside>
+
+    <!-- Tabuleiro + lances -->
+    <div class="content">
+      <ng-container *ngIf="selectedChapter; else noChapter">
+        <div class="board-panel">
+          <app-chess-board
+            [fen]="currentFen"
+            [draggable]="false"
+            [arrows]="currentArrows()"
+            [circles]="currentCircles()"
+            (annotationAdded)="onAnnotationAdded($event)"
+            (annotationRemoved)="onAnnotationRemoved($event)"
+          ></app-chess-board>
+          <p class="chapter-title">{{ selectedChapter.name }} · lance {{ currentPly() }} / {{ totalPly }}</p>
+        </div>
+
+        <nav class="move-nav">
+          <button class="btn" (click)="first()">⏮</button>
+          <button class="btn" (click)="prev()">◀</button>
+          <span class="counter">{{ currentPly() }} / {{ totalPly }}</span>
+          <button class="btn" (click)="next()">▶</button>
+          <button class="btn" (click)="last()">⏭</button>
+        </nav>
+
+        <div class="moves" *ngIf="moveRows().length">
+          <div class="move-row" *ngFor="let row of moveRows()">
+            <span class="move-number">{{ row.number }}.</span>
+            <button class="move" [class.active]="isActive(row, 'white')" (click)="goTo(plyFor(row, 'white'))">{{ row.white }}</button>
+            <button class="move" *ngIf="row.black" [class.active]="isActive(row, 'black')" (click)="goTo(plyFor(row, 'black'))">{{ row.black }}</button>
+          </div>
+        </div>
+        <p class="hint">Use as setas ← → do teclado para navegar entre os lances.</p>
+      </ng-container>
+
+      <ng-template #noChapter>
+        <div class="empty card">Selecione ou crie um capítulo.</div>
+      </ng-template>
+    </div>
+
+    <!-- Anotações -->
+    <aside class="annotations card" *ngIf="selectedChapter">
+      <h2>Anotações deste lance</h2>
+
+      <div class="legend">
+        <p><strong>Clique direito</strong> no tabuleiro:</p>
+        <ul>
+          <li>Arraste entre casas → seta</li>
+          <li>Clique numa casa → círculo</li>
+          <li><span class="swatch" style="background:#3b9e46"></span> padrão</li>
+          <li><span class="swatch" style="background:#d4363b"></span> Shift</li>
+          <li><span class="swatch" style="background:#3b74d4"></span> Alt</li>
+          <li><span class="swatch" style="background:#e08e28"></span> Shift + Alt</li>
+        </ul>
+        <p class="redraw-hint">Redesenhar a mesma seta/círculo a remove.</p>
+      </div>
+
+      <div class="text-form">
+        <input type="text" placeholder="Escreva uma nota sobre este lance..." [value]="textValue()" (input)="onTextInput($event)" />
+        <button class="btn btn-primary" [disabled]="!textValue().trim()" (click)="addText()">Anotar</button>
+      </div>
+
+      <div class="text-list">
+        <div class="text-item" *ngFor="let t of currentTexts()">
+          <span class="ply-tag">Lance {{ t.ply }}</span>
+          <span class="text-body">{{ t.text }}</span>
+          <button class="ann-delete" (click)="deleteText(t)">✕</button>
+        </div>
+        <p *ngIf="currentTexts().length === 0" class="muted">Nenhuma nota textual neste lance.</p>
+      </div>
+    </aside>
+  </div>
+</div>

@@ -66,12 +66,13 @@ model Game {
   termination String?
 
   timeControl TimeControl @default(CUSTOM)
-  opening     String?     // nome da abertura (ECO)
+  opening     String?     
   eco         String?     // código ECO (ex.: B90)
   fen         String      // posição final em FEN
   turns       Int         @default(0) // total de meios-lances
   playedAt    DateTime?   // data/hora em que a partida foi jogada
   pgn         String?     // PGN original completo
+  fingerprint String      @unique // hash para evitar importação duplicada
 
   moves   Move[]
   studies Study[]
@@ -131,16 +132,17 @@ model Chapter {
   updatedAt DateTime @updatedAt
 }
 
-// Anotação visual sobre um capítulo (setas, círculos, destaques, texto)
+// Anotação visual/textual sobre um capítulo (setas, círculos, texto)
 model Annotation {
   id        String         @id @default(cuid())
   chapterId String
   type      AnnotationType
+  ply       Int            @default(0) // lance (meio-lance) ao qual a anotação pertence; 0 = posição inicial
   square    String?        // casa alvo (ex.: "e4")
   from      String?        // origem para setas (ex.: "e2")
   to        String?        // destino para setas (ex.: "e4")
   text      String?        // texto livre
-  color     String?        // cor (ex.: "#ff0000")
+  color     String?        // cor (ex.: "green", "red", "blue", "orange")
 
   chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 

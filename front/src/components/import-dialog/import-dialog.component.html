@@ -37,8 +37,7 @@
             type="text"
             placeholder="ex.: magnuscarlsen"
             [value]="username()"
-            (input)="username.set($any($event.target).value)"
-            (blur)="username.set($any($event.target).value)"
+            (input)="onUsernameInput($event)"
           />
         </label>
         <label>
@@ -48,7 +47,7 @@
             min="1"
             max="500"
             [value]="maxGames()"
-            (input)="maxGames.set($any($event.target).valueAsNumber || 20)"
+            (input)="onMaxGamesInput($event)"
           />
         </label>
       </ng-container>
@@ -59,7 +58,7 @@
           rows="8"
           placeholder="[Event ...]&#10;[White ...]&#10;...&#10;&#10;1. e4 e5 ..."
           [value]="pgnText()"
-          (input)="pgnText.set($any($event.target).value)"
+          (input)="onPgnInput($event)"
         ></textarea>
       </label>
 

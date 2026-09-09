@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { prisma } from "../lib/prisma.js";
 import { parseResult, parseTimeControl } from "../domain/chess.js";
 import type { ParsedPgnGame } from "./pgn-parser.js";
@@ -43,22 +44,45 @@ function buildGameData(pgn: ParsedPgnGame, source: GameSource) {
     turns: pgn.moves.length,
     playedAt: pgn.playedAt,
     pgn: pgn.pgn,
+    fingerprint: computeFingerprint(pgn),
     isWhiteWin: result === GameResult.WHITE_WIN,
     isBlackWin: result === GameResult.BLACK_WIN,
     isDraw: result === GameResult.DRAW,
   };
 }
 
+/** Gera um hash determinístico baseado na sequência de lances e jogadores. */
+function computeFingerprint(pgn: ParsedPgnGame): string {
+  const norm = [
+    pgn.white.trim().toLowerCase(),
+    pgn.black.trim().toLowerCase(),
+    pgn.result ?? "*",
+    pgn.moves.map((m) => m.san.trim().toLowerCase()).join(" "),
+  ].join("|");
+  return createHash("sha256").update(norm).digest("hex");
+}
+
 /** Importa e persiste um conjunto de partidas, com seus lances. */
 export async function importGames(
-  imported: ImportedGame[],
+  items: ImportedGame[],
   source: GameSource,
-): Promise<number> {
-  let created = 0;
-  for (const item of imported) {
+): Promise<{ imported: number; skipped: number }> {
+  let imported = 0;
+  let skipped = 0;
+  for (const item of items) {
     const data = buildGameData(item.pgn, source);
 
-    // Evita duplicados por externalId quando fornecido
+    // Evita duplicados: se já existe uma partida com a mesma impressão digital,
+    // pula a inserção.
+    const existing = await prisma.game.findUnique({
+      where: { fingerprint: data.fingerprint },
+      select: { id: true },
+    });
+    if (existing) {
+      skipped++;
+      continue;
+    }
+
     const game = await prisma.game.create({
       data: {
         ...data,
@@ -74,18 +98,20 @@ export async function importGames(
         },
       },
     });
-    created++;
+    imported++;
     void game;
   }
-  return created;
+  return { imported, skipped };
 }
 
 /** Importa via texto PGN colado pelo usuário ou arquivo enviado. */
-export async function importFromPgnText(pgnText: string): Promise<number> {
+export async function importFromPgnText(
+  pgnText: string,
+): Promise<{ imported: number; skipped: number }> {
   const { parseMultiplePgn } = await import("./pgn-parser.js");
   const games = parseMultiplePgn(pgnText);
-  const imported = games.map((pgn) => ({ pgn }));
-  return importGames(imported, GameSource.PGN_FILE);
+  const items = games.map((pgn) => ({ pgn }));
+  return importGames(items, GameSource.PGN_FILE);
 }
 
 /** Importa manualmente uma partida (brand data). */

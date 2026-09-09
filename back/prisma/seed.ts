@@ -36,8 +36,8 @@ const SAMPLE_PGN = `
 `;
 
 async function main() {
-  const count = await importFromPgnText(SAMPLE_PGN);
-  console.log(`Seed concluído: ${count} partidas importadas.`);
+  const { imported, skipped } = await importFromPgnText(SAMPLE_PGN);
+  console.log(`Seed concluído: ${imported} partidas importadas, ${skipped} duplicadas ignoradas.`);
 
   await prisma.study.create({
     data: {
