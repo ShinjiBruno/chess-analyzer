@@ -30,6 +30,9 @@ const listQuerySchema = z.object({
 const importChessComSchema = z.object({
   username: z.string().min(1),
   maxGames: z.number().int().min(1).max(500).default(20),
+  isWin: z.boolean().optional(),
+  color: z.nativeEnum(Color).optional(),
+  timeControl: z.nativeEnum(TimeControl).optional(),
 });
 
 export async function gameRoutes(app: FastifyInstance) {
@@ -64,8 +67,9 @@ export async function gameRoutes(app: FastifyInstance) {
   });
 
   app.post("/games/import/chesscom", async (req, reply) => {
-    const { username, maxGames } = importChessComSchema.parse(req.body);
-    const games = await importChessCom(username, maxGames);
+    const body = importChessComSchema.parse(req.body);
+    const games = await importChessCom(body);
+    console.log(games)
     return importGames(games, GameSource.CHESS_COM);
   });
 

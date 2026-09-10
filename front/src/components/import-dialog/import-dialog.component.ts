@@ -17,6 +17,11 @@ export class ImportDialogComponent {
   tab = signal<'chesscom' | 'lichess' | 'pgn'>('chesscom');
   username = signal('');
   maxGames = signal(20);
+  //chess.com
+  isWin = signal<boolean | null>(null);
+  color = signal<'white' | 'black' | null>(null);
+  timeControl = signal<'blitz' | 'rapid' | 'bullet'| 'classical' | null>(null);
+
   pgnText = signal('');
 
   loading = signal(false);
@@ -58,7 +63,8 @@ export class ImportDialogComponent {
     try {
       let res: { imported: number; skipped: number };
       if (this.tab() === 'chesscom') {
-        res = await this.api.importChessCom(this.username().trim(), this.maxGames());
+        const filter = {username: this.username().trim(), maxGames: this.maxGames(), isWin: this.isWin(), color: this.color(), timeControl: this.timeControl()};
+        res = await this.api.importChessCom(filter);
       } else if (this.tab() === 'lichess') {
         res = await this.api.importLichess(this.username().trim(), this.maxGames());
       } else {

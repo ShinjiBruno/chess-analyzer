@@ -29,46 +29,69 @@ async function chessComArchives(username: string): Promise<string[]> {
   return json.archives ?? [];
 }
 
-/** Filtra os arquivos a serem baixados conforme o número de partidas solicitado. */
-function selectArchives(archives: string[], maxGames: number): string[] {
-  // do mais recente para o mais antigo
-  const reversed = [...archives].reverse();
-  const selected: string[] = [];
-  let acc = 0;
-  for (const arch of reversed) {
-    selected.push(arch);
-    acc += 100; // cada arquivo mensal tem até ~100 partidas
-    if (acc >= maxGames) break;
-  }
-  return selected;
-}
+
 
 interface ChessComGame {
   url?: string;
   pgn?: string;
+  white?: {result: string, username: string};
+  black?: {result: string, username: string};
+  time_class?:string
 }
 
-/** Importa as últimas partidas de um usuário do chess.com (sem autenticação). */
-export async function importChessCom(
+function filterChesscomGames(
+  games: ChessComGame[], 
   username: string,
-  maxGames = 20,
-): Promise<ImportedGame[]> {
-  const archives = await chessComArchives(username);
-  const selected = selectArchives(archives, maxGames);
+  isWin?: boolean | null, 
+  color?: 'WHITE' | 'BLACK' | null, 
+  timeControl?: 'BLITZ' | 'RAPID' | 'BULLET'| 'CLASSICAL' | 'CORRESPONDENCE' | 'CUSTOM' | null): ChessComGame[] {
+    return games.filter((g)=>{
+      //filtrar por vencedor
+      if(!isWin) {return true}
+      const winner = g.white?.result === "win" ? g.white?.username : g.black?.username;
+      return isWin && winner?.toLowerCase() === username.toLowerCase();
 
+    }).filter((g)=>{
+      //filtrar por cor
+      if(!color){return true}
+      const playerColor = g.white?.username.toLowerCase() === username.toLowerCase() ? 'white' : 'black';
+      return color.toLowerCase() === playerColor;
+    }).filter((g)=>{
+      //filtrar por modalidade
+      if(!timeControl){return true}
+      const tc = g.time_class?.toLowerCase();
+      return tc === timeControl.toLowerCase();
+    })
+}
+
+/** Importa as ultimas partidas de um usuario do chess.com (api publica). **/
+export async function importChessCom( body: { username: string; maxGames: number; isWin?: boolean | null; color?: 'WHITE' | 'BLACK' | null; timeControl?: 'BLITZ' | 'RAPID' | 'BULLET'| 'CLASSICAL' | 'CORRESPONDENCE' | 'CUSTOM' | null }): Promise<ImportedGame[]> {
+  
+  const { username, maxGames, isWin, color, timeControl } = body;
+  
+  if(maxGames <= 0) return []
+
+  const archives = await chessComArchives(username);
+  const selected = archives.reverse() 
+
+  let gameCount = 0;
   const games: ImportedGame[] = [];
+
   for (const arch of selected) {
-    const text = await fetchText(arch);
-    const json = JSON.parse(text) as { games?: ChessComGame[] };
-    for (const g of json.games ?? []) {
+    const text = await fetchText(arch).catch((e) => {if(e.message.includes("404 Not Found")) return "Not Found"; else throw e;});
+    if(text === "Not Found") continue;
+    const json = JSON.parse(text) as { games?: ChessComGame[] }; 
+    const filteredGames = filterChesscomGames(json.games ?? [], username, isWin, color, timeControl);
+    for (const g of filteredGames) {
       if (!g.pgn) continue;
+      gameCount++;
       const pgn = parsePgn(g.pgn);
       games.push({
         pgn,
         url: g.url,
         externalId: g.url ?? pgn.site,
       });
-      if (games.length >= maxGames) return games;
+      if (gameCount >= maxGames) return games;
     }
   }
   return games;
@@ -78,6 +101,9 @@ export async function importChessCom(
 export async function importLichess(
   username: string,
   maxGames = 20,
+  isWin?: boolean | null,
+  color?: 'WHITE' | 'BLACK' | null,
+  timeControl?: 'BLITZ' | 'RAPID' | 'BULLET'| 'CLASSICAL' | 'CORRESPONDENCE' | 'CUSTOM' | null
 ): Promise<ImportedGame[]> {
   const url = `${LICHESS_API}/api/games/user/${encodeURIComponent(username)}?max=${maxGames}&pgnInJson=false`;
   const pgnText = await fetchText(url);

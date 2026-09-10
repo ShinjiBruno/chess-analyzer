@@ -19,8 +19,10 @@ export class ApiService {
   private readonly baseUrl = 'http://localhost:3333';
 
   private async request<T>(path: string, options?: RequestInit): Promise<T> {
+    let hasBody = !!options?.body;
+
     const res = await fetch(`${this.baseUrl}${path}`, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: hasBody ? { 'Content-Type': 'application/json' } : {},
       ...options,
     });
     if (!res.ok) {
@@ -66,10 +68,10 @@ export class ApiService {
     });
   }
 
-  importChessCom(username: string, maxGames: number): Promise<ImportResult> {
+  importChessCom(request: { username: string; maxGames: number; isWin?: boolean | null; color?: 'white' | 'black' | null; timeControl?: 'blitz' | 'rapid' | 'bullet'| 'classical' | null }): Promise<ImportResult> {
     return this.request<ImportResult>('/games/import/chesscom', {
       method: 'POST',
-      body: JSON.stringify({ username, maxGames }),
+      body: JSON.stringify(request),
     });
   }
 
