@@ -126,13 +126,13 @@
 }
 
 .badge.win-white {
-  background: #e6f4ea;
-  color: #1e7d3c;
+  background: #eeeeee;
+  color: #000000;
 }
 
 .badge.win-black {
-  background: #fdecea;
-  color: #b3241c;
+  background: #222222;
+  color: #ffffff;
 }
 
 .badge.draw {

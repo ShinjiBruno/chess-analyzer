@@ -98,6 +98,13 @@ export class ApiService {
     });
   }
 
+  renameStudy(id: string, newName: string): Promise<Study> {
+    return this.request<Study>(`/studies/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ name: newName }),
+    });
+  }
+
   deleteStudy(id: string): Promise<void> {
     return this.request<void>(`/studies/${id}`, { method: 'DELETE' });
   }

@@ -5,6 +5,7 @@ import {
   addAnnotation,
   createChapter,
   createStudy,
+  renameStudy,
   deleteAnnotation,
   deleteChapter,
   deleteStudy,
@@ -49,6 +50,17 @@ export async function studyRoutes(app: FastifyInstance) {
     const study = await getStudyById(id);
     if (!study) return reply.code(404).send({ error: "Estudo não encontrado" });
     return study;
+  });
+
+  app.patch("/studies/:id", async (req, reply) => {
+    const { id } = req.params as { id: string};
+    const data = z.object({ name: z.string().min(1) }).parse(req.body);
+    
+    const study = await getStudyById(id);
+    if (!study) return reply.code(404).send({ error: "Estudo não encontrado" });
+
+    const updatedStudy = await renameStudy(id, data.name);
+    return updatedStudy;
   });
 
   app.delete("/studies/:id", async (req, reply) => {

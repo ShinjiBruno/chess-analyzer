@@ -59,7 +59,8 @@ function parseMoves(body: string): { san: string; uci?: string; comment?: string
 
   const tokens = withoutResult
     .split(/\s+/)
-    .filter((t) => t.length > 0 && !/^\d+\.{1,3}$/.test(t)); // remove números de lance
+    .map((t)=> t.replace(/^\d+\.{1,3}/, ""))
+    .filter((t) => t.length >0); 
 
   const moves: { san: string; uci?: string; comment?: string }[] = [];
   for (const token of tokens) {

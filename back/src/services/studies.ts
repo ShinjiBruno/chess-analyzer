@@ -28,6 +28,13 @@ export async function getStudyById(id: string) {
   });
 }
 
+export async function renameStudy(id: string, newName:string){
+  return prisma.study.update({
+    where: {id},
+    data: {name: newName}
+  })
+}
+
 export async function deleteStudy(id: string) {
   return prisma.study.delete({ where: { id } });
 }
