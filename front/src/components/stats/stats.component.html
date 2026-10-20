@@ -1,0 +1,161 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Estatísticas</h1>
+      <p class="subtitle">Métricas de desempenho por jogador, modo de jogo e abertura</p>
+    </div>
+  </header>
+
+  <section class="filters card">
+    <div class="filters-grid">
+      <label class="field">
+        Nome de usuário
+        <input
+          type="text"
+          placeholder="ex.: MagnusCarlsen"
+          [value]="username()"
+          (input)="onUsernameInput($event)"
+        />
+      </label>
+      <label class="field">
+        Período
+        <select [value]="period()" (change)="onPeriodChange($event)">
+          <option value="all">Todo o período</option>
+          <option value="7d">Últimos 7 dias</option>
+          <option value="30d">Último mês</option>
+          <option value="90d">Últimos 3 meses</option>
+          <option value="365d">Último ano</option>
+          <option value="custom">Personalizado</option>
+        </select>
+      </label>
+      <ng-container *ngIf="period() === 'custom'">
+        <label class="field">
+          De
+          <input type="date" [value]="fromDate()" (input)="onFromInput($event)" />
+        </label>
+        <label class="field">
+          Até
+          <input type="date" [value]="untilDate()" (input)="onUntilInput($event)" />
+        </label>
+      </ng-container>
+    </div>
+    <div class="filters-actions">
+      <button class="btn btn-primary" [disabled]="loading()" (click)="apply()">Consultar</button>
+    </div>
+  </section>
+
+  <p *ngIf="error()" class="error">{{ error() }}</p>
+
+  <div *ngIf="loading()" class="loading">Calculando estatísticas...</div>
+
+  <ng-container *ngIf="(!loading() && stats()) as s">
+    <p *ngIf="!s.username" class="hint">
+      Informe um nome de usuário para ver vitórias, derrotas e empates do ponto de vista do jogador.
+    </p>
+
+    <!-- Estado vazio: sem partidas -->
+    <section *ngIf="s.total === 0" class="empty card">
+      <p>Nenhuma partida encontrada para os filtros informados.</p>
+      <button class="btn btn-primary" (click)="goToImport()">Importar partidas</button>
+    </section>
+
+    <ng-container *ngIf="s.total > 0">
+      <!-- Totais gerais -->
+      <section class="totals">
+        <div class="total-card card">
+          <span class="total-value">{{ s.total }}</span>
+          <span class="total-label">Partidas</span>
+        </div>
+        <div class="total-card card win">
+          <span class="total-value">{{ s.wins }}</span>
+          <span class="total-label">Vitórias</span>
+        </div>
+        <div class="total-card card loss">
+          <span class="total-value">{{ s.losses }}</span>
+          <span class="total-label">Derrotas</span>
+        </div>
+        <div class="total-card card draw">
+          <span class="total-value">{{ s.draws }}</span>
+          <span class="total-label">Empates</span>
+        </div>
+      </section>
+
+      <!-- Por modo de jogo -->
+      <section class="panel card">
+        <h2>Por modo de jogo</h2>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Modo</th>
+              <th class="num">Total</th>
+              <th class="num">V</th>
+              <th class="num">D</th>
+              <th class="num">E</th>
+              <th class="num">Win rate</th>
+              <th class="bar-col">Distribuição</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of s.byTimeControl">
+              <td>{{ timeControlLabel(row.timeControl) }}</td>
+              <td class="num">{{ row.total }}</td>
+              <td class="num win">{{ row.wins }}</td>
+              <td class="num loss">{{ row.losses }}</td>
+              <td class="num draw">{{ row.draws }}</td>
+              <td class="num">{{ winRate(row) }}%</td>
+              <td class="bar-col">
+                <ng-container *ngTemplateOutlet="bar; context: { $implicit: row }"></ng-container>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Por abertura (respeitando ECO) -->
+      <section class="panel card">
+        <h2>Por abertura (código ECO)</h2>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>ECO</th>
+              <th>Abertura</th>
+              <th class="num">Total</th>
+              <th class="num">V</th>
+              <th class="num">D</th>
+              <th class="num">E</th>
+              <th class="num">Win rate</th>
+              <th class="bar-col">Distribuição</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of s.byOpening">
+              <td>
+                <span class="eco" *ngIf="row.eco">{{ row.eco }}</span>
+                <span class="muted" *ngIf="!row.eco">—</span>
+              </td>
+              <td>{{ row.opening ?? 'Sem abertura' }}</td>
+              <td class="num">{{ row.total }}</td>
+              <td class="num win">{{ row.wins }}</td>
+              <td class="num loss">{{ row.losses }}</td>
+              <td class="num draw">{{ row.draws }}</td>
+              <td class="num">{{ winRate(row) }}%</td>
+              <td class="bar-col">
+                <ng-container *ngTemplateOutlet="bar; context: { $implicit: row }"></ng-container>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p *ngIf="s.byOpening.length === 0" class="muted">Sem dados de abertura.</p>
+      </section>
+    </ng-container>
+  </ng-container>
+</div>
+
+<ng-template #bar let-row>
+  <div class="stacked-bar" [title]="row.wins + ' vitórias · ' + row.draws + ' empates · ' + row.losses + ' derrotas'">
+    <span class="seg win" [style.width.%]="segments(row).win"></span>
+    <span class="seg draw" [style.width.%]="segments(row).draw"></span>
+    <span class="seg loss" [style.width.%]="segments(row).loss"></span>
+    <span class="seg unknown" [style.width.%]="segments(row).unknown"></span>
+  </div>
+</ng-template>

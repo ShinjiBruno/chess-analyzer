@@ -52,13 +52,40 @@ export interface GameListResponse {
   games: Game[];
 }
 
+export interface OutcomeCounts {
+  wins: number;
+  losses: number;
+  draws: number;
+  unknown: number;
+  total: number;
+}
+
+export interface TimeControlStats extends OutcomeCounts {
+  timeControl: TimeControl;
+}
+
+export interface OpeningStats extends OutcomeCounts {
+  eco: string | null;
+  opening: string | null;
+}
+
 export interface GameStats {
+  username: string | null;
+  playedSince: string | null;
+  playedUntil: string | null;
   total: number;
   wins: number;
   losses: number;
   draws: number;
-  byTimeControl: { timeControl: TimeControl; _count: number }[];
-  byOpening: { opening: string | null; _count: number }[];
+  unknown: number;
+  byTimeControl: TimeControlStats[];
+  byOpening: OpeningStats[];
+}
+
+export interface StatsFilter {
+  username?: string;
+  playedSince?: string;
+  playedUntil?: string;
 }
 
 export interface Annotation {

@@ -27,6 +27,12 @@ const listQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(200).default(50),
 });
 
+const statsQuerySchema = z.object({
+  username: z.string().optional(),
+  playedSince: z.coerce.date().optional(),
+  playedUntil: z.coerce.date().optional(),
+});
+
 const importChessComSchema = z.object({
   username: z.string().min(1),
   maxGames: z.number().int().min(1).max(500).default(20),
@@ -43,8 +49,9 @@ export async function gameRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.get("/games/stats", async () => {
-    return getStats();
+  app.get("/games/stats", async (req) => {
+    const query = statsQuerySchema.parse(req.query);
+    return getStats(query);
   });
 
   app.get("/games/:id", async (req, reply) => {

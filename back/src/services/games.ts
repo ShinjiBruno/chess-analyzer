@@ -193,17 +193,187 @@ export async function deleteGame(id: string) {
   return prisma.game.delete({ where: { id } });
 }
 
-/** Estatísticas agregadas para dashboards/filtros. */
-export async function getStats() {
-  const [total, wins, losses, draws, byTimeControl, byOpening] =
-    await Promise.all([
-      prisma.game.count(),
-      prisma.game.count({ where: { OR: [{ isWhiteWin: true }, { isBlackWin: true }] } }),
-      prisma.game.count({ where: { result: GameResult.UNKNOWN } }),
-      prisma.game.count({ where: { isDraw: true } }),
-      prisma.game.groupBy({ by: ["timeControl"], _count: true }),
-      prisma.game.groupBy({ by: ["opening"], _count: true, orderBy: { _count: { opening: "desc" } }, take: 10 }),
-    ]);
+// ---------------------------------------------------------------------------
+// Estatísticas (UC: Consultar estatísticas)
+// ---------------------------------------------------------------------------
 
-  return { total, wins, losses, draws, byTimeControl, byOpening };
+export interface StatsFilter {
+  username?: string;
+  playedSince?: Date;
+  playedUntil?: Date;
+}
+
+type Outcome = keyof Pick<OutcomeCounts, "wins" | "losses" | "draws" | "unknown">;
+
+interface OutcomeCounts {
+  wins: number;
+  losses: number;
+  draws: number;
+  unknown: number;
+  total: number;
+}
+
+export interface TimeControlStats extends OutcomeCounts {
+  timeControl: TimeControl;
+}
+
+export interface OpeningStats extends OutcomeCounts {
+  eco: string | null;
+  opening: string | null;
+}
+
+export interface GameStats {
+  username: string | null;
+  playedSince: Date | null;
+  playedUntil: Date | null;
+  total: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  unknown: number;
+  byTimeControl: TimeControlStats[];
+  byOpening: OpeningStats[];
+}
+
+const TIME_CONTROL_ORDER: TimeControl[] = [
+  "BULLET",
+  "BLITZ",
+  "RAPID",
+  "CLASSICAL",
+  "CORRESPONDENCE",
+  "CUSTOM",
+];
+
+interface StatsGameRow {
+  white: string;
+  black: string;
+  result: GameResult;
+  isWhiteWin: boolean;
+  isBlackWin: boolean;
+  isDraw: boolean;
+  timeControl: TimeControl;
+  eco: string | null;
+  opening: string | null;
+}
+
+function emptyCounts(): OutcomeCounts {
+  return { wins: 0, losses: 0, draws: 0, unknown: 0, total: 0 };
+}
+
+/** Classifica o resultado da partida do ponto de vista de um jogador. */
+function outcomeFor(game: StatsGameRow, target: string | null): Outcome {
+  if (game.result === GameResult.DRAW || game.isDraw) return "draws";
+  if (!target) {
+    return game.result === GameResult.WHITE_WIN ||
+      game.result === GameResult.BLACK_WIN
+      ? "wins"
+      : "unknown";
+  }
+  const playingWhite = game.white.trim().toLowerCase() === target;
+  const playingBlack = game.black.trim().toLowerCase() === target;
+  if (game.result === GameResult.WHITE_WIN) return playingWhite ? "wins" : "losses";
+  if (game.result === GameResult.BLACK_WIN) return playingBlack ? "wins" : "losses";
+  return "unknown";
+}
+
+/** Chave de agrupamento por abertura, respeitando o código ECO dos metadados. */
+function openingKey(game: StatsGameRow): string {
+  const eco = game.eco?.trim().toUpperCase();
+  if (eco) return `eco:${eco}`;
+  const opening = game.opening?.trim().toLowerCase();
+  if (opening) return `opening:${opening}`;
+  return "none";
+}
+
+/** Estatísticas agregadas por jogador, modo de jogo e abertura (com ECO). */
+export async function getStats(filter: StatsFilter = {}): Promise<GameStats> {
+  const where: Prisma.GameWhereInput = {};
+  if (filter.playedSince || filter.playedUntil) {
+    where.playedAt = {};
+    if (filter.playedSince) where.playedAt.gte = filter.playedSince;
+    if (filter.playedUntil) where.playedAt.lte = filter.playedUntil;
+  }
+
+  const games = await prisma.game.findMany({
+    where,
+    select: {
+      white: true,
+      black: true,
+      result: true,
+      isWhiteWin: true,
+      isBlackWin: true,
+      isDraw: true,
+      timeControl: true,
+      eco: true,
+      opening: true,
+    },
+  });
+
+  const username = filter.username?.trim() || null;
+  const target = username?.toLowerCase() ?? null;
+  const relevant = target
+    ? games.filter(
+        (g) =>
+          g.white.trim().toLowerCase() === target ||
+          g.black.trim().toLowerCase() === target,
+      )
+    : games;
+
+  const totals = emptyCounts();
+  const timeControlMap = new Map<TimeControl, OutcomeCounts>();
+  const openingMap = new Map<string, OpeningStats>();
+
+  for (const game of relevant) {
+    const outcome = outcomeFor(game, target);
+    totals[outcome] += 1;
+    totals.total += 1;
+
+    // Agrupamento por modo de jogo.
+    const tcCounts = timeControlMap.get(game.timeControl) ?? emptyCounts();
+    tcCounts[outcome] += 1;
+    tcCounts.total += 1;
+    timeControlMap.set(game.timeControl, tcCounts);
+
+    // Agrupamento por abertura, respeitando o código ECO.
+    const key = openingKey(game);
+    let openingStats = openingMap.get(key);
+    if (!openingStats) {
+      openingStats = {
+        eco: game.eco?.trim().toUpperCase() || null,
+        opening: game.opening?.trim() || null,
+        ...emptyCounts(),
+      };
+      openingMap.set(key, openingStats);
+    }
+    openingStats[outcome] += 1;
+    openingStats.total += 1;
+  }
+
+  const byTimeControl: TimeControlStats[] = TIME_CONTROL_ORDER.filter((tc) =>
+    timeControlMap.has(tc),
+  )
+    .map((tc) => ({ timeControl: tc, ...timeControlMap.get(tc)! }))
+    .concat(
+      [...timeControlMap.keys()]
+        .filter((tc) => !TIME_CONTROL_ORDER.includes(tc))
+        .map((tc) => ({ timeControl: tc, ...timeControlMap.get(tc)! })),
+    );
+
+  const byOpening: OpeningStats[] = [...openingMap.values()].sort(
+    (a, b) =>
+      b.total - a.total || (a.eco ?? "").localeCompare(b.eco ?? ""),
+  );
+
+  return {
+    username,
+    playedSince: filter.playedSince ?? null,
+    playedUntil: filter.playedUntil ?? null,
+    total: totals.total,
+    wins: totals.wins,
+    losses: totals.losses,
+    draws: totals.draws,
+    unknown: totals.unknown,
+    byTimeControl,
+    byOpening,
+  };
 }

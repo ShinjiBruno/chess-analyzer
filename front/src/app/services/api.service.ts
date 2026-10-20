@@ -6,6 +6,7 @@ import type {
   GameFilter,
   GameListResponse,
   GameStats,
+  StatsFilter,
   Study,
 } from '../models';
 
@@ -57,8 +58,8 @@ export class ApiService {
     return this.request<void>(`/games/${id}`, { method: 'DELETE' });
   }
 
-  getStats(): Promise<GameStats> {
-    return this.request<GameStats>('/games/stats');
+  getStats(filter: StatsFilter = {}): Promise<GameStats> {
+    return this.request<GameStats>(`/games/stats${this.buildQuery(filter as Record<string, unknown>)}`);
   }
 
   importPgn(pgn: string): Promise<ImportResult> {

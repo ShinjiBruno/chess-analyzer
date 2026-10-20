@@ -1,0 +1,221 @@
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.9rem;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+/* Filtros */
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.field input,
+.field select {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.filters-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+/* Totais */
+.totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.total-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 20px 12px;
+}
+
+.total-value {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.total-label {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.total-card.win .total-value {
+  color: #16a34a;
+}
+
+.total-card.loss .total-value {
+  color: #dc2626;
+}
+
+.total-card.draw .total-value {
+  color: #6b7280;
+}
+
+/* Painéis */
+.panel h2 {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th {
+  text-align: left;
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 0.78rem;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th.num {
+  text-align: right;
+}
+
+.table .win {
+  color: #16a34a;
+}
+
+.table .loss {
+  color: #dc2626;
+}
+
+.table .draw {
+  color: #6b7280;
+}
+
+.bar-col {
+  width: 200px;
+}
+
+.eco {
+  padding: 1px 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.8rem;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* Barra empilhada */
+.stacked-bar {
+  display: flex;
+  height: 10px;
+  width: 100%;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--bg);
+  gap: 1px;
+}
+
+.seg {
+  height: 100%;
+}
+
+.seg.win {
+  background: #16a34a;
+}
+
+.seg.draw {
+  background: #9ca3af;
+}
+
+.seg.loss {
+  background: #dc2626;
+}
+
+.seg.unknown {
+  background: #e5e7eb;
+}
+
+.loading,
+.empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 32px;
+}
+
+.empty button {
+  margin-top: 12px;
+}
+
+.error {
+  color: #b3241c;
+  background: #fdecea;
+  border-radius: 8px;
+  padding: 12px;
+}
