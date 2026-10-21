@@ -36,9 +36,9 @@ const statsQuerySchema = z.object({
 const importChessComSchema = z.object({
   username: z.string().min(1),
   maxGames: z.number().int().min(1).max(500).default(20),
-  isWin: z.boolean().optional(),
-  color: z.nativeEnum(Color).optional(),
-  timeControl: z.nativeEnum(TimeControl).optional(),
+  isWin: z.boolean().nullable().optional(),
+  color: z.nativeEnum(Color).nullable().optional(),
+  timeControl: z.nativeEnum(TimeControl).nullable().optional(),
 });
 
 export async function gameRoutes(app: FastifyInstance) {

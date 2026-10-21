@@ -47,9 +47,9 @@ function filterChesscomGames(
   timeControl?: 'BLITZ' | 'RAPID' | 'BULLET'| 'CLASSICAL' | 'CORRESPONDENCE' | 'CUSTOM' | null): ChessComGame[] {
     return games.filter((g)=>{
       //filtrar por vencedor
-      if(!isWin) {return true}
+      if(isWin === null || isWin === undefined) {return true}
       const winner = g.white?.result === "win" ? g.white?.username : g.black?.username;
-      return isWin && winner?.toLowerCase() === username.toLowerCase();
+      return isWin === (winner?.toLowerCase() === username.toLowerCase());
 
     }).filter((g)=>{
       //filtrar por cor
