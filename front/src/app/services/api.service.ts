@@ -69,7 +69,7 @@ export class ApiService {
     });
   }
 
-  importChessCom(request: { username: string; maxGames: number; isWin?: boolean | null; color?: 'white' | 'black' | null; timeControl?: 'blitz' | 'rapid' | 'bullet'| 'classical' | null }): Promise<ImportResult> {
+    importChessCom(request: { username: string; maxGames: number; isWin?: boolean | null; color?: 'white' | 'black' | null; timeControl?: 'blitz' | 'rapid' | 'bullet'| 'classical' | null }): Promise<ImportResult> {
     return this.request<ImportResult>('/games/import/chesscom', {
       method: 'POST',
       body: JSON.stringify(request),

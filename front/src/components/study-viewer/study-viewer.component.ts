@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, HostListener } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Chess } from 'chess.js';
@@ -58,6 +58,7 @@ export class StudyViewerComponent {
   chapterName = signal('');
   chapterFen = signal('start');
   chapterPgn = signal('');
+  boardOrientation = signal<'white' | 'black'>('white');
 
   // Formulário de anotação textual
   textValue = signal('');
@@ -67,6 +68,23 @@ export class StudyViewerComponent {
     private route: ActivatedRoute,
     private router: Router,
   ) {}
+
+    @HostListener('window:keydown', ['$event'])
+    onKeydown(event: KeyboardEvent) {
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      this.prev();
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      this.next();
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      this.first();
+    } else if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.last();
+    }
+  }
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
@@ -179,6 +197,10 @@ export class StudyViewerComponent {
   }
   last() {
     this.goTo(this.totalPly);
+  }
+
+  flip() {
+    this.boardOrientation.set(this.boardOrientation() === 'white' ? 'black' : 'white');
   }
 
   backToList() {

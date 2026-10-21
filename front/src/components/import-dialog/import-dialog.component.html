@@ -50,6 +50,31 @@
             (input)="onMaxGamesInput($event)"
           />
         </label>
+        <label>
+          Ritmo
+          <select class="select" [value]="filter().timeControl ?? ''" (change)="onFieldChange('timeControl', $event)">
+            <option value="">Todos os ritmos</option>
+            <option *ngFor="let t of timeControlLabels" [value]="t.value">{{ t.label }}</option>
+          </select>
+        </label>
+        <label>
+          Cor das peças
+          <select class="select" [value]="filter().color ?? ''" (change)="onFieldChange('color', $event)">
+            <option value="">Todas as cores</option>
+            <option value="WHITE">Brancas</option>
+            <option value="BLACK">Pretas</option>
+          </select>
+        </label>
+        <label>
+          Resultado
+          <select class="select" [value]="filter().isWin ?? ''" (change)="onFieldChange('isWin', $event)">
+            <option value="">Todos os resultados</option>
+            <option value="true">Vitória</option>
+            <option value="false">Derrota</option>
+          </select>
+        </label>
+
+        
       </ng-container>
 
       <label *ngIf="tab() === 'pgn'">
